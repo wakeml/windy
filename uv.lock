@@ -48,6 +48,15 @@ wheels = [
 ]
 
 [[package]]
+name = "django-rainbowtests"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/93/d1/ecba0af41d54ff8f95c7837cedda3d76315954044b5d4a4d903ac1d81d56/django-rainbowtests-0.6.0.tar.gz", hash = "sha256:0700ee1386935822dca296d323d67b0563cb2e5012b553ebca7c9391f2298cd9", size = 6290, upload-time = "2016-12-21T23:42:54.58Z" }
+
+[[package]]
 name = "django-taggit"
 version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -240,6 +249,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "django" },
     { name = "django-ninja" },
+    { name = "django-rainbowtests" },
     { name = "django-taggit" },
     { name = "geojson-pydantic" },
     { name = "psycopg2-binary" },
@@ -249,6 +259,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=5.2.3" },
     { name = "django-ninja", specifier = ">=1.4.3" },
+    { name = "django-rainbowtests", specifier = ">=0.6.0" },
     { name = "django-taggit", specifier = ">=6.1.0" },
     { name = "geojson-pydantic", specifier = ">=2.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },

@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "django>=5.2.3",
     "django-ninja>=1.4.3",
+    "django-rainbowtests>=0.6.0",
     "django-taggit>=6.1.0",
     "geojson-pydantic>=2.0.0",
     "psycopg2-binary>=2.9.10",
