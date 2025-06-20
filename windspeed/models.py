@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import timedelta
 
@@ -17,6 +18,10 @@ class Measurements(models.Model):
 
     # Added for tags
     tags = TaggableManager()
+
+    @property
+    def lat_lon_point(self):
+        return json.loads(self.lat_lon.json)
 
     class Meta:
         """We want to constrain the wind direction to compass bearings 00-359"""
@@ -49,4 +54,4 @@ class Measurements(models.Model):
         return daily_ave, weekly_ave
 
     def __str__(self) -> str:
-        return f"{self.meter_ID}, {self.wind_direction}, {self.wind_speed}"
+        return f"{str(self.meter_ID)}"
