@@ -23,11 +23,28 @@ Bonus:
 
 We're using Django, Django-ninja, taggit, and postgis running in docker.  The routes are in `windspeed/api/routes`.
 
+Yes, the postgis login information / secrets are in the settings module, but for educational purposes that's fine for now.  If someone can access a locally running docker container on my personal machine, I have other problems.  In a production environment you would use env-vars.
+
 ## Models
+
+We have a single model, Measurements, that stores all of the required windspeed data.  We have a StatsManager that acts as a table level method, to get well, stats on the data.  We added a constraint on the wind direction to limit it to compass degrees, and finally we have used django taggit for "Tags".
 
 
 ## Routes
+--windspeed/api/routes.py
+--windspeed/api/schema.py
 
+There are seven routes, the traditional CRUD routes, plus a "get all" route.  
+
+The last two are `get_all_close_by_location` and `filter_all_measurements_by_tag`, which as you can image do what the title implies.
+
+## Gotcha's
+
+The django-ninja library does not natively support GEO-DJANGO Point fields.  As such the various schemas don't actually return the lat/lon.  After working on it for a bit, I decided to pause working on that functionality, as this is just an exercise.  In reality there are several approaches to fixing this issue.
+
+First we could investigate further how other people have handled this problem.  There's a few comments on Stack Overflow and Github about it, but nothing that was easily (and quickly) implementable.
+
+The next option is to _store_ points in the database, but to _display_ and _transmit_ lat/lon pairs as numbers in the APIs.  This would be my recommendation moving forward.
 
 
 

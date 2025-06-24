@@ -82,5 +82,5 @@ def get_all_close_by_location(request: HttpRequest, lat, lon, distance):
 # tags
 @paginate
 @wind_router.get("/tag/{tags}", response=list[MeasurementsOUT])
-def filter_all_measurements(request: HttpRequest, tags: str):
+def filter_all_measurements_by_tag(request: HttpRequest, tags: str):
     return Measurements.objects.filter(tags__name__in=[tags])
