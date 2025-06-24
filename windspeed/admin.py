@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from windspeed.models import Measurements
+
+admin.site.register(Measurements)

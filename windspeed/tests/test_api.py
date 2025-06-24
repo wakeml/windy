@@ -6,7 +6,8 @@ from ninja.testing import TestClient
 
 from windspeed.api.routes import wind_router
 from windspeed.models import Measurements
-from windspeed.utils.data import create_single_test_measurement
+from windspeed.utils.data import (create_multiple_test_measurements,
+                                  create_single_test_measurement)
 
 
 class WindAPITest(TestCase):
@@ -27,13 +28,10 @@ class WindAPITest(TestCase):
 
     # Retrieve all
     def test_get_all(self):
-        create_single_test_measurement(None, None, tags=None)
-
-        lat_lon_2 = [42.346708117969264, -71.09716683802934]
-        create_single_test_measurement(lat_lon_2, None, tags=None)
+        create_multiple_test_measurements()
         response = self.client.get("/")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data["meas"]), 5)
 
     # Retrieve single
     def test_get_single(self):
@@ -46,12 +44,20 @@ class WindAPITest(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.data["meter_ID"], mID)
 
-    # # Update
-    # def test_update(self):
-    #     val = create_single_test_measurement(None, None, tags=None)
+    # Update
+    def test_update(self):
+        val = create_single_test_measurement(None, None, tags=None)
 
-    #     response = self.client.put("/{meter_ID}", )
-    #     self.assertEqual(response.status_code, HTTPStatus.OK)
+        payload = {
+            "lat_lon": [41.94830673751509, -87.65555532334828],
+            "timestamp": timezone.now(),
+            "wind_direction": 180,
+            "wind_speed": 55.0,
+            "tags": "Stadiums",
+        }
+
+        response = self.client.put("/{}".format(str(val.meter_ID)), json=payload)
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
 
     # Delete
     def test_delete(self):
@@ -69,9 +75,7 @@ class WindAPITest(TestCase):
         mID1 = str(val.meter_ID)
 
         lat_lon_2 = [42.346708117969264, -71.09716683802934]
-        mid2 = create_single_test_measurement(
-            lat_lon_2, timestamp=timezone.now(), tags=None
-        )
+        create_single_test_measurement(lat_lon_2, timestamp=timezone.now(), tags=None)
 
         distance_miles_to_search = 50
         test_point1 = [40.82967313475971, -73.9262386676671]
@@ -79,15 +83,23 @@ class WindAPITest(TestCase):
 
         # no match
         response1 = self.client.get(
-            "/{}/{}".format(test_point1, distance_miles_to_search)
+            "/{}/{}/{}".format(test_point1[0], test_point1[1], distance_miles_to_search)
         )
         self.assertEqual(response1.status_code, HTTPStatus.OK)
         self.assertEqual(len(response1.data), 0)
 
         # 1 match
         response2 = self.client.get(
-            "/{}/{}".format(test_point2, distance_miles_to_search)
+            "/{}/{}/{}".format(test_point2[0], test_point2[1], distance_miles_to_search)
         )
         self.assertEqual(response2.status_code, HTTPStatus.OK)
         self.assertEqual(len(response2.data), 1)
-        self.assertEqual(response2.data["meter_ID"], mID1)
+        self.assertEqual(response2.data[0]["meter_ID"], mID1)
+
+    # Test searching by tag
+    def test_tags(self):
+        create_multiple_test_measurements()
+
+        response = self.client.get("/tag/{}".format("Fenway Park"))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(len(response.data), 1)

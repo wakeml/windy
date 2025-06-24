@@ -4,12 +4,9 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 
-
-from django.contrib.gis.db.models import PointField
-
 from windspeed.models import Measurements
 
-from .schema import Error, MeasurementsIN, MeasurementsOUT, Success
+from .schema import Anem_listOUT, MeasurementsIN, MeasurementsOUT, Success
 
 wind_router = Router()
 
@@ -27,10 +24,17 @@ def new_measurement(request: HttpRequest, payload: MeasurementsIN):
 
 
 @paginate
-@wind_router.get("/", response=list[MeasurementsOUT])
+@wind_router.get("/", response=Anem_listOUT)
 def list_all_measurements(request: HttpRequest):
-    """Return All Measurements"""
-    return Measurements.objects.all()
+    """
+    The anemometers list endpoint should be _paginated_ and feature the
+    _5 last readings and statistics_:
+    daily readings, speed average, and weekly average.
+    """
+    return {
+        "meas": Measurements.objects.all().order_by("-id")[:5],
+        "stats": Measurements.objects.get_averages(),
+    }
 
 
 # Get single
@@ -40,23 +44,17 @@ def get_single_measurement_by_ID(request: HttpRequest, meter_ID: str):
     return Measurements.objects.get(meter_ID=meter_ID)
 
 
-# @wind_router.put("/{meter_ID}")
-# def update_measurement(request: HttpRequest, meter_ID: str, payload: MeasurementsIN):
-#     obj = Measurements.objects.get(meter_ID=meter_ID)
+@wind_router.put("/{meter_ID}", response={204: Success})
+def update_measurement(request: HttpRequest, meter_ID: str, payload: MeasurementsIN):
 
-#     Measurements.objects.create(
-#         lat_lon=Point(payload.lat_lon),
-#         timestamp=payload.timestamp,
-#         wind_direction=payload.wind_direction,
-#         wind_speed=payload.wind_speed,
-#     )
+    _meas = Measurements.objects.filter(meter_ID=meter_ID).update(
+        lat_lon=Point(payload.lat_lon),
+        timestamp=payload.timestamp,
+        wind_direction=payload.wind_direction,
+        wind_speed=payload.wind_speed,
+    )
 
-# filter by tag
-# @paginate
-# @wind_router.get("/{tag}", response=list[MeasurementsOUT])
-# def filter_all_measurements(request: HttpRequest, tag: list[str]):
-#
-#     return Measurements.objects.filter()
+    return 204, {"message": "updated successfully"}
 
 
 @wind_router.delete("/{meter_ID}")
@@ -67,21 +65,22 @@ def delete_measurement(request: HttpRequest, meter_ID: str):
 
 
 # get distance and stats
-@wind_router.get("/{point}/{distance}", response=list[MeasurementsOUT])
-def get_all_close_by_location(request: HttpRequest, point, distance):
-    """Return All Measurements"""
-    # return Measurements.objects.filter()
+@wind_router.get("/{lat}/{lon}/{distance}", response=list[MeasurementsOUT])
+def get_all_close_by_location(request: HttpRequest, lat, lon, distance):
+    """
+    Add an endpoint to would give you statistics (avg)
+    on anemometers reading within a certain radius
+    (like 5 miles around a given coordinate)
+    """
+    pt = Point(float(lat), float(lon))
 
-    # distance_miles_to_search = 50
-    # point = PointField()  # get a point of a particular place (usually by latitude/longitude)
-    # ans  = Company.objects.filter(places__point__distance_lte=(point, D(mi=distance_miles_to_search))).annotate(closest_city_id=F('places__city'))
-
-    distance_miles_to_search = 50
-    point = PointField(
-        point
-    )  # get a point of a particular place (usually by latitude/longitude)
-    ans = Measurements.objects.filter(
-        lat_lon__distance_lte=(point, D(mi=distance_miles_to_search))
-    )
+    ans = Measurements.objects.filter(lat_lon__distance_lte=(pt, D(mi=distance)))
 
     return ans
+
+
+# tags
+@paginate
+@wind_router.get("/tag/{tags}", response=list[MeasurementsOUT])
+def filter_all_measurements(request: HttpRequest, tags: str):
+    return Measurements.objects.filter(tags__name__in=[tags])
